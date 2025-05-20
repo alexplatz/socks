@@ -7,7 +7,7 @@ import { useWebSocket } from 'react-use-websocket/src/lib/use-websocket'
 
 const socketUrl = 'ws://127.0.0.1:4000'
 
-export const App = () => { 
+export const App = () => {
   const [text, setText] = useState('')
   const [history, setHistory] = useState<string[]>([])
   const { sendMessage } = useWebSocket(
@@ -21,8 +21,6 @@ export const App = () => {
       }
     }
   )
-
-  // useEffect(() => console.log(ReadyState))
 
   const handleSubmit = (e: ChangeEvent<HTMLFormElement>) => {
     e.preventDefault()
