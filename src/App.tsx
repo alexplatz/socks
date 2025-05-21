@@ -1,6 +1,6 @@
 import "./index.css";
 
-import React, { ChangeEvent, useEffect, useState } from "react";
+import { ChangeEvent, useEffect, useState } from "react";
 // import useWebSocket, { ReadyState } from "react-use-websocket";
 // to fix weird default function error
 import { useWebSocket } from 'react-use-websocket/src/lib/use-websocket'
@@ -10,7 +10,7 @@ const socketUrl = 'ws://127.0.0.1:4000'
 export const App = () => {
   const [text, setText] = useState('')
   const [history, setHistory] = useState<string[]>([])
-  const { sendMessage } = useWebSocket(
+  const { lastMessage, sendMessage } = useWebSocket(
     socketUrl,
     {
       onOpen: () => {
@@ -22,11 +22,16 @@ export const App = () => {
     }
   )
 
+  useEffect(() => lastMessage ?
+    setHistory(prev => prev.concat(lastMessage.data)) :
+    undefined,
+    [lastMessage]
+  )
+
   const handleSubmit = (e: ChangeEvent<HTMLFormElement>) => {
     e.preventDefault()
     sendMessage(text)
-    console.log(text)
-    setHistory(prevHistory => prevHistory.concat(text))
+    setHistory(prev => prev.concat(text))
     setText(_ => '')
   }
 

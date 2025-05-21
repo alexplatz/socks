@@ -2,13 +2,22 @@ import { serve } from "bun"
 
 const server = serve({
   port: 4000,
-  fetch: (req, server) => {
-    if (!server.upgrade(req)) {
-      return new Response("Upgrade failed", { status: 500 })
-    }
-  },
+  fetch: (req, server) => !server.upgrade(req) ?
+    new Response("Upgrade failed", { status: 500 }) :
+    undefined,
   websocket: {
-    message: (_ws, message) => { console.log(message) },
+    open: (ws) => {
+      ws.subscribe('chat')
+      server.publish('chat', 'new user has entered the chat')
+    },
+    message: (ws, message) => {
+      ws.publish('chat', message)
+      console.log(message)
+    },
+    close: (ws) => {
+      ws.unsubscribe('chat')
+      server.publish('chat', 'user has left the chat')
+    },
     perMessageDeflate: true,
   },
 })
