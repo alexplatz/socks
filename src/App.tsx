@@ -10,7 +10,7 @@ const socketUrl = 'ws://127.0.0.1:4000'
 export const App = () => {
   const [text, setText] = useState('')
   const [history, setHistory] = useState<string[]>([])
-  const { lastMessage, sendMessage } = useWebSocket(
+  const { lastMessage, sendMessage, sendJsonMessage } = useWebSocket(
     socketUrl,
     {
       onOpen: () => {
@@ -22,28 +22,45 @@ export const App = () => {
     }
   )
 
-  useEffect(() => lastMessage ?
-    setHistory(prev => prev.concat(lastMessage.data)) :
-    undefined,
-    [lastMessage]
-  )
+  useEffect(() => {
+    lastMessage ?
+      // act on type, only add strings to history
+      // setHistory(prev => prev.concat(lastMessage.data)) :
+      parseMessage(lastMessage) :
+      undefined
+  }, [lastMessage])
 
   const handleSubmit = (e: ChangeEvent<HTMLFormElement>) => {
     e.preventDefault()
     sendMessage(text)
-    setHistory(prev => prev.concat(text))
+    // setHistory(prev => prev.concat(text))
     setText(_ => '')
   }
 
+  // debounce this to 3 seconds
+  const handleChange = (e: ChangeEvent<HTMLInputElement>) => {
+    e.preventDefault()
+    sendJsonMessage({ lastInput: Date.now() })
+    setText(e.target.value)
+  }
+
+  // how to tell when regular string or json?
+  const parseMessage = ({ data }: MessageEvent<string>) => {
+    // console.log(typeof data, data)
+    console.log(JSON.parse(data))
+  }
+
+  // on typing send lastInput timestamp with username/id
+  // show typing indicator if lastInputTimestamp >= Date.now() - 5000 
   return (
     <div className="app">
       {history.map(item => <p>{item}</p>)}
       <form onSubmit={handleSubmit}>
         <input
+          onChange={handleChange}
           type="text"
           // className={styles.textbox}
           value={text}
-          onChange={e => setText(e.target.value)}
         />
       </form>
     </div>
