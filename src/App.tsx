@@ -1,4 +1,4 @@
-import { ChatEvent, ChatLog, ChatMessage, toChatEvent, toChatLog, toChatMessage } from "#types";
+import { ChatEvent, ChatLog, ChatMessage, toChatLog, toChatMessage } from "#types";
 import randomName from "@scaleway/random-name";
 import "./index.css";
 
@@ -10,15 +10,11 @@ import { match } from "mutch";
 
 const socketUrl = 'ws://127.0.0.1:4000'
 const username = randomName()
-type Typing = {
-  username: string,
-  lastInput: number
-}
 
 export const App = () => {
   const [text, setText] = useState('')
   const [history, setHistory] = useState<string[]>([])
-  const [typing, setTyping] = useState<Typing[]>([])
+  const [typing, setTyping] = useState<Map<string, number>>(new Map<string, number>())
   const { lastMessage, sendMessage } = useWebSocket(
     socketUrl,
     {
@@ -39,13 +35,6 @@ export const App = () => {
       undefined
   }, [lastMessage])
 
-  // how to display and then timeout typing indicator?
-  useEffect(() => {
-    lastMessage ?
-      handleMessage(JSON.parse(lastMessage.data)) :
-      undefined
-  }, [typing])
-
 
 
   const handleSubmit = (e: ChangeEvent<HTMLFormElement>) => {
@@ -57,50 +46,52 @@ export const App = () => {
   // debounce this to 3 seconds
   const handleChange = (e: ChangeEvent<HTMLInputElement>) => {
     e.preventDefault()
-    sendMessage(toChatLog({ lastInput: Date.now() }, username))
-    setText(e.target.value)
-  }
-
-  const handleMessage = (data: ChatMessage | ChatEvent | ChatLog) => {
-    if (data.type === 'message' || data.type === 'event') {
-      setHistory(prev => prev.concat(data.content))
+    if (e.target.value) {
+      sendMessage(toChatLog({ lastInput: Date.now() }, username))
+      setText(e.target.value)
     } else {
-      setTyping([
-        ...typing,
-        {
-          username: data.username,
-          lastInput: data.content.lastInput
-        }
-      ])
+      sendMessage(toChatLog({ lastInput: null }, username))
+      setText(e.target.value)
     }
   }
 
-
-  const typingIndicator = (usersTyping: Typing[]) => {
-    const users = usersTyping
-      .filter(({ lastInput }) =>
-        lastInput >= Date.now() - 5000
-      )
-
-    // rework mutch
-    return match(users.length, [
-      [, () => <p>Multiple people typing...</p>],
-      [=== 1, () => <p>{users.pop()?.username} is typing...</p>],
-    ],
-      () => null
-    )
+  const handleMessage = (data: ChatMessage | ChatEvent | ChatLog) => {
+    if (data.type === 'message') {
+      setHistory(prev => prev.concat(data.content))
+      stopTyping(data.username)
+    } else if (data.type === 'event') {
+      setHistory(prev => prev.concat(data.content))
+    } else {
+      if (data.content.lastInput) {
+        setTyping(prev => new Map(prev).set(data.username, data.content.lastInput))
+      } else {
+        clearTimeout(typing.get(data.username))
+        stopTyping(data.username)
+      }
+    }
   }
 
-  // on typing send lastInput timestamp with username/id
-  // show typing indicator if lastInputTimestamp >= Date.now() - 5000 
+  const stopTyping = (username: string) => {
+    setTyping(prev => {
+      prev.delete(username)
+      return new Map(prev)
+    })
+  }
+
+
   return (
     <div className="app">
       {history.map(item => <p>{item}</p>)}
       <form onSubmit={handleSubmit}>
         {
-          // typing.lastInput >= Date.now() - 5000 ?
-          //   <p>{typing.username} is typing...</p> :
-          //   null
+          match(
+            typing.size,
+            [
+              [0, () => null],
+              [1, () => <p>{typing.keys().next().value} is typing...</p>],
+            ],
+            () => <p>multiple people typing...</p>
+          )
         }
         <input
           onChange={handleChange}
