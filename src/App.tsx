@@ -2,7 +2,7 @@ import { ChatEvent, ChatLog, ChatMessage, toChatLog, toChatMessage } from "#type
 import randomName from "@scaleway/random-name";
 import "./index.css";
 
-import { ChangeEvent, useEffect, useState } from "react";
+import { ChangeEvent, useEffect, useRef, useState } from "react";
 // import useWebSocket, { ReadyState } from "react-use-websocket";
 // to fix weird default function error
 import { useWebSocket } from 'react-use-websocket/src/lib/use-websocket'
@@ -15,6 +15,7 @@ export const App = () => {
   const [text, setText] = useState('')
   const [history, setHistory] = useState<string[]>([])
   const [typing, setTyping] = useState<Map<string, number>>(new Map<string, number>())
+  const [timeouts, setTimeouts] = useState<Map<string, number>>(new Map<string, number>())
   const { lastMessage, sendMessage } = useWebSocket(
     socketUrl,
     {
@@ -35,6 +36,21 @@ export const App = () => {
       undefined
   }, [lastMessage])
 
+  useEffect(() => {
+    typing.entries().forEach(([username, lastInput]) => {
+      clearTimeout(typing.get(username))
+
+      const token = window.setTimeout(() =>
+        stopTyping(username),
+        1750 - (Date.now() - lastInput)
+      )
+
+      setTimeouts(prev => new Map(prev).set(username, token))
+    })
+
+    return timeouts.entries().forEach(([_, token]) => clearTimeout(token))
+  }, [typing])
+
 
 
   const handleSubmit = (e: ChangeEvent<HTMLFormElement>) => {
@@ -43,7 +59,7 @@ export const App = () => {
     setText(_ => '')
   }
 
-  // debounce this to 3 seconds
+  // debounce this to 1.5 seconds
   const handleChange = (e: ChangeEvent<HTMLInputElement>) => {
     e.preventDefault()
     if (e.target.value) {
@@ -73,6 +89,10 @@ export const App = () => {
 
   const stopTyping = (username: string) => {
     setTyping(prev => {
+      prev.delete(username)
+      return new Map(prev)
+    })
+    setTimeouts(prev => {
       prev.delete(username)
       return new Map(prev)
     })
