@@ -4,9 +4,14 @@ A simple websockets demo, very cool!!
 
 ## Development
 
-Make sure you spin up a websocket server on port `4000`
+Clone in the repo
 
-Then clone in the repo, run either `bun run dev` or `bun run start` and navigate to `localhost:3000`
+Install the dependencies with `bun i`
+
+Start the websocket server with `bun run server`
+
+Then run `bun run start` and navigate to `localhost:3000`
+
 
 ## Tech Stack
 
