@@ -12,6 +12,7 @@ Start the websocket server with `bun run server`
 
 Then run `bun run start` and navigate to `localhost:3000`
 
+
 ## Tech Stack
 
 - UI layer:          React
