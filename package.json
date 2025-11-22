@@ -12,21 +12,10 @@
     "#hooks": "./src/utils/hooks.ts"
   },
   "scripts": {
-<<<<<<< Updated upstream
-    "dev": "NODE_ENV=production bun --hot src/index.tsx",
-    "build": "bun build ./src/index.html --outdir=dist --sourcemap --target=browser --minify --define:process.env.NODE_ENV='\"production\"' --env='BUN_PUBLIC_*'",
-<<<<<<< HEAD
-    "start": "NODE_ENV=production bun src/index.tsx",
-    "server": "bun src/server.ts"
-=======
-    "start": "NODE_ENV=production bun src/index.tsx"
-=======
     "dev": "NODE_ENV=production bun --hot src/server/index.tsx",
     "build": "bun build ./src/client/index.html --outdir=dist --sourcemap --target=browser --minify --define:process.env.NODE_ENV='\"production\"' --env='BUN_PUBLIC_*'",
     "start": "NODE_ENV=production bun src/server/index.tsx",
     "server": "bun src/server/websockets.ts"
->>>>>>> Stashed changes
->>>>>>> 9e02d36 (restructuring)
   },
   "dependencies": {
     "@scaleway/random-name": "^5.1.1",
